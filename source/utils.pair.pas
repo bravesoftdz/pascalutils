@@ -23,7 +23,7 @@
 (*                                                                            *)
 (******************************************************************************)
 
-unit utils.optional;
+unit utils.pair;
 
 {$IFDEF FPC}
   {$mode objfpc}{$H+}
@@ -38,73 +38,53 @@ uses
   SysUtils;
 
 type
-  { None value exception }
-  TNoneValueException = class(Exception); 
-
-  { Optional class type which can contains some value or none, like Rust lang }
-  {$IFDEF FPC}generic{$ENDIF} TOptional<T> = class
+  { Contains pair of values like in C++ language. }
+  {$IFDEF FPC}generic{$ENDIF} TPair<T1, T2> = class
   public
-    { Create new Optional with None type }
+    type
+      TSelfPair = {$IFDEF FPC}specialize{$ENDIF} TPair<T1, T2>;
+  protected
+    FFirst : T1;
+    FSecond : T2;
+  public
+    { Create pair with default values of T1 and T2 } 
     constructor Create; overload;
 
-    { Create new Optional with Some type }
-    constructor Create (AValue : T); overload;
+    { Create pair with defined values. }
+    constructor Create (AFirst : T1; ASecond : T2); overload;
 
-    { Return true if optional contains value }
-    function IsSome : Boolean;
-      {$IFNDEF DEBUG}inline;{$ENDIF}
+    { Create pair from exiting pair. }
+    constructor Create (APair : TSelfPair); overload;
 
-    { Return true if optional contains none }
-    function IsNone : Boolean;
-      {$IFNDEF DEBUG}inline;{$ENDIF}
+    { Pair first value. }
+    property First : T1 read FFirst write FFirst;
 
-    { Return stored value or raise TNoneValueException exeption if none }
-    function Unwrap : T;
-      {$IFNDEF DEBUG}inline;{$ENDIF}
-  protected
-    type
-      TValue = record
-        Ok : Boolean;
-        Value : T;
-      end;
-  protected
-    FValue : TValue;
+    { Pair second value. }
+    property Second : T2 read FSecond write FSecond;
   end;
 
 implementation
 
-{ TOptional generic }
+{ TPair generic }
 
-constructor TOptional{$IFNDEF FPC}<T>{$ENDIF}.Create;
+constructor TPair{$IFNDEF FPC}<T1, T2>{$ENDIF}.Create;
 begin
-  FValue.Ok := False;
+  FFirst := Default(T1);
+  FSecond := Default(T2);
+  inherited Create;
 end;
 
-constructor TOptional{$IFNDEF FPC}<T>{$ENDIF}.Create (AValue : T);
+constructor TPair{$IFNDEF FPC}<T1, T2>{$ENDIF}.Create (AFirst : T1; ASecond :
+  T2);
 begin
-  FValue.Ok := True;
-  FValue.Value := AValue;
+  FFirst := AFirst;
+  FSecond := ASecond;
 end;
 
-function TOptional{$IFNDEF FPC}<T>{$ENDIF}.IsSome : Boolean;
+constructor TPair{$IFNDEF FPC}<T1, T2>{$ENDIF}.Create (APair : TSelfPair);
 begin
-  Result := FValue.Ok;
-end;
-
-function TOptional{$IFNDEF FPC}<T>{$ENDIF}.IsNone : Boolean;
-begin
-  Result := not FValue.Ok;
-end;
-
-function TOptional{$IFNDEF FPC}<T>{$ENDIF}.Unwrap : T;
-begin
-  if IsSome then
-  begin
-    Result := FValue.Value;
-  end else 
-  begin
-    raise TNoneValueException.Create('Value not exists');
-  end;
+  FFirst := APair.First;
+  FSecond := APair.Second;
 end;
 
 end.
